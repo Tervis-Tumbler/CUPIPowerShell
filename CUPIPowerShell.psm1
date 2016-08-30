@@ -13,19 +13,20 @@ function Find-CUPIUser {
     param(
         $Query
     )
-    Invoke-CUPIAPIFunctionWithQueryStringParameters -HttpMethod Get -Parameters $PSBoundParameters -ResourceType users
+    Invoke-CUPIAPIFunctionWithQueryStringParameters -HttpMethod Get -Parameters $PSBoundParameters -ResourceType users |
+    Select -ExpandProperty User
 }
 
 function Get-CUPIUserDetails {
     param(
-        $ObjectID
+        [Parameter(ValueFromPipelineByPropertyName)]$ObjectID
     )
     Invoke-CUPIAPIFunction -HttpMethod Get -ResourceType users -ObjectID $ObjectID
 }
 
 function Remove-CUPIUser {
     param(
-        $ObjectID
+        [Parameter(ValueFromPipelineByPropertyName)]$ObjectID
     )
     Invoke-CUPIAPIFunction -HttpMethod Delete -ResourceType users -ObjectID $ObjectID
 }
@@ -97,17 +98,30 @@ function Invoke-CUPIAPIFunctionWithQueryStringParameters {
         [parameter(Mandatory)][ValidateSet("users","distributionlists","mailbox")]$ResourceType,
         $Parameters = @{}
     )
-    
+    add-type @"
+    using System.Net;
+    using System.Security.Cryptography.X509Certificates;
+    public class TrustAllCertsPolicy : ICertificatePolicy {
+        public bool CheckValidationResult(
+            ServicePoint srvPoint, X509Certificate certificate,
+            WebRequest request, int certificateProblem) {
+            return true;
+        }
+    }
+"@
+    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
     $Credential = Import-Clixml $env:USERPROFILE\CUCCredential.txt
 
     $URI = Get-CUPIAPIURLWithParametersInURL -ResourceType $ResourceType -Parameters $Parameters
 
-    $Result = Invoke-WebRequest -Uri $URI -Method $HttpMethod -Credential $Credential #-Headers @{"accept"="application/json"}
+    $Result = Invoke-WebRequest -Uri $URI -Method $HttpMethod -Credential $Credential -Headers @{"accept"="application/json"}
     $ResultObject = $Result.Content | ConvertFrom-Json
+    $ResultObject
 
-    $ResourceResponse = $ResultObject.$ResourceType
-    $ResourceResponseMainPropertyName = $ResourceResponse | gm -MemberType Properties | where name -NE Total | select -ExpandProperty name
-    $ResourceResponse.$ResourceResponseMainPropertyName
+    #$ResourceResponse = $ResultObject.$ResourceType
+    #$ResourceResponseMainPropertyName = $ResourceResponse | gm -MemberType Properties | where name -NE Total | select -ExpandProperty name
+    #$ResourceResponse.$ResourceResponseMainPropertyName
 }
 
 function Invoke-CUPIAPIFunction {
