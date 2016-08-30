@@ -26,7 +26,7 @@ function Get-CUPIUserDetails {
 
 function Remove-CUPIUser {
     param(
-        [Parameter(ValueFromPipelineByPropertyName)]$ObjectID
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ObjectID
     )
     Invoke-CUPIAPIFunction -HttpMethod Delete -ResourceType users -ObjectID $ObjectID
 }
