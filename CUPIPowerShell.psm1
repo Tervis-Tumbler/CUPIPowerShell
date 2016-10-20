@@ -88,7 +88,10 @@ function New-CUPIQuery {
 }
 
 function New-CUCCredential {
-    $CUCCredential = Get-Credential
+    param(
+    $CUCCredential = (Get-Credential)
+    )
+
     $CUCCredential | Export-Clixml $env:USERPROFILE\CUCCredential.txt
 }  
 
