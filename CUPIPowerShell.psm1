@@ -101,24 +101,20 @@ function Invoke-CUPIAPIFunctionWithQueryStringParameters {
         [parameter(Mandatory)][ValidateSet("users","distributionlists","mailbox")]$ResourceType,
         $Parameters = @{}
     )
-    add-type @"
-    using System.Net;
-    using System.Security.Cryptography.X509Certificates;
-    public class TrustAllCertsPolicy : ICertificatePolicy {
-        public bool CheckValidationResult(
-            ServicePoint srvPoint, X509Certificate certificate,
-            WebRequest request, int certificateProblem) {
-            return true;
-        }
-    }
-"@
-    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
     $Credential = Import-Clixml $env:USERPROFILE\CUCCredential.txt
-
     $URI = Get-CUPIAPIURLWithParametersInURL -ResourceType $ResourceType -Parameters $Parameters
+        
+    $CurrentCertificatePolicy = Get-CurrentCertificatePolicy
+    $CurrentSecurityProtocol = Get-CurrentSecurityProtocol
+    Set-CertificatePolicy -TrustAllCerts
+    Set-SecurityProtocol -SecurityProtocol Ssl3
 
     $Result = Invoke-WebRequest -Uri $URI -Method $HttpMethod -Credential $Credential -Headers @{"accept"="application/json"}
+    
+    Set-CertificatePolicy -CertificatePolicy $CurrentCertificatePolicy
+    Set-SecurityProtocol -SecurityProtocol $CurrentSecurityProtocol
+    
     $ResultObject = $Result.Content | ConvertFrom-Json
     $ResultObject
 
@@ -139,7 +135,17 @@ function Invoke-CUPIAPIFunction {
     if ($ObjectID) {
         $URI += "/" + $ObjectID
     }
+
+    $CurrentCertificatePolicy = Get-CurrentCertificatePolicy
+    $CurrentSecurityProtocol = Get-CurrentSecurityProtocol
+    Set-CertificatePolicy -TrustAllCerts
+    Set-SecurityProtocol -SecurityProtocol Ssl3
+
     $Response = Invoke-WebRequest -Uri $URI -Method $HttpMethod -Credential $Credential
+
+    Set-CertificatePolicy -CertificatePolicy $CurrentCertificatePolicy
+    Set-SecurityProtocol -SecurityProtocol $CurrentSecurityProtocol
+
     if ($Response.StatusCode -eq 200) {
         $XmlContent = [xml]$Response.Content
 
