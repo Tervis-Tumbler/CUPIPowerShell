@@ -14,7 +14,7 @@ function Find-CUPIUser {
         $Query
     )
     Invoke-CUPIAPIFunctionWithQueryStringParameters -HttpMethod Get -Parameters $PSBoundParameters -ResourceType users |
-    Select -ExpandProperty User
+    Select -ExpandProperty User -ErrorAction SilentlyContinue
 }
 
 function Get-CUPIUserDetails {
@@ -28,7 +28,7 @@ function Remove-CUPIUser {
     param(
         [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ObjectID
     )
-    Invoke-CUPIAPIFunction -HttpMethod Delete -ResourceType users -ObjectID $ObjectID
+    Invoke-CUPIAPIFunction -HttpMethod Delete -ResourceType users -ObjectID $ObjectID -ErrorAction SilentlyContinue
 }
 
 Function Find-CUPIUserByAlias {
