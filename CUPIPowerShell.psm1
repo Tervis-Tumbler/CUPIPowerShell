@@ -10,11 +10,12 @@ Function Set-CUPIRootAPIURL {
 }
 
 function Find-CUPIUser {
+    [CmdletBinding()]
     param(
         $Query
     )
     Invoke-CUPIAPIFunctionWithQueryStringParameters -HttpMethod Get -Parameters $PSBoundParameters -ResourceType users |
-    Select -ExpandProperty User -ErrorAction SilentlyContinue
+    Select -ExpandProperty User
 }
 
 function Get-CUPIUserDetails {
@@ -28,10 +29,11 @@ function Remove-CUPIUser {
     param(
         [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ObjectID
     )
-    Invoke-CUPIAPIFunction -HttpMethod Delete -ResourceType users -ObjectID $ObjectID -ErrorAction SilentlyContinue
+    Invoke-CUPIAPIFunction -HttpMethod Delete -ResourceType users -ObjectID $ObjectID
 }
 
 Function Find-CUPIUserByAlias {
+    [CmdletBinding()]
     param(
         $Alias
     )
